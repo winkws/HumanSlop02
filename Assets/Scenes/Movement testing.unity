@@ -1763,6 +1763,10 @@ PrefabInstance:
       propertyPath: groundLayer.m_Bits
       value: 4294967295
       objectReference: {fileID: 0}
+    - target: {fileID: 8128844576882324778, guid: b53a0a40c9539e348b4af23809ae2a63, type: 3}
+      propertyPath: wallBouncesForDashReset
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 8650537843925532436, guid: b53a0a40c9539e348b4af23809ae2a63, type: 3}
       propertyPath: m_Size.x
       value: 0.85

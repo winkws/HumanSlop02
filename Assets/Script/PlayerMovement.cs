@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Linq;
-using UnityEngine.UIElements;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -10,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
 
     [SerializeField] float dashTime;
     [SerializeField] float dashSpeed;
+    [SerializeField] int wallBouncesForDashReset;
 
     [SerializeField] float minWallJumpTime;
     [SerializeField] float maxWallJumpTime;
@@ -40,6 +40,8 @@ public class PlayerMovement : MonoBehaviour
     float timeSinceJump = 0f;
     float jumpBufferTimer = 0f;
 
+    int wallJumps = 0;
+
     bool dashAvailable = false;
     bool dashing = false;
     bool wallJumping = false;
@@ -60,7 +62,6 @@ public class PlayerMovement : MonoBehaviour
         gravity = rb.gravityScale;
     }
 
-    int i = 0;
     void Update()
     {
         timeSinceJump += Time.deltaTime;
@@ -190,6 +191,14 @@ public class PlayerMovement : MonoBehaviour
 
         timeSinceJump = 0f;
         jumpBufferTimer = 0f;
+
+        wallJumps++;
+
+        if(wallJumps >= wallBouncesForDashReset)
+        {
+            dashAvailable = true;
+            wallJumps = 0;
+        }
 
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2(-movement * wallJumpHeight, wallJumpHeight), ForceMode2D.Impulse);
