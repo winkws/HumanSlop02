@@ -22,6 +22,7 @@ public class PlayerMovement : MonoBehaviour
 
     Rigidbody2D rb;
     SpriteRenderer sr;
+    Animator animator;
 
     InputAction movementAction;
     InputAction jumpAction;
@@ -33,12 +34,15 @@ public class PlayerMovement : MonoBehaviour
     bool dashing = false;
     bool wallJumping = false;
 
+    float timeSinceJump = 0f;
+
     float gravity;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
+        animator = GetComponent<Animator>();
 
         movementAction = InputSystem.actions.FindAction("movement");
         jumpAction = InputSystem.actions.FindAction("jump");
@@ -49,9 +53,14 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        timeSinceJump += Time.deltaTime;
+
         if (dashing && dashTimer > 0)
         {
             dashTimer -= Time.deltaTime;
+
+            animator.SetBool("Dashing", false);
+
             return;
         }
         else if (dashing && dashTimer <= 0)
@@ -90,16 +99,30 @@ public class PlayerMovement : MonoBehaviour
 
         Vector2 movement = movementAction.ReadValue<Vector2>();
 
-        if (GroundCheck())
+        if(WallCheck() != 0 && movement.x == WallCheck())
+        {
+            animator.SetBool("WallHugging", true);
+        }
+        else
+        {
+            animator.SetBool("WallHugging", false);
+        }
+
+        if (GroundCheck() && timeSinceJump > 0.05f)
         {
             rb.linearDamping = 10f;
+            animator.SetBool("Jumping", false);
         }
         else
         {
             rb.linearDamping = damping;
         }
         
-        //if (movement.x == 0) rb.linearVelocityX = 0;
+        if (movement.x == 0)
+        {
+            animator.SetInteger("Movement", 0);
+        }
+
         if (movement == Vector2.zero) return;
 
         if (dashAction.WasPressedThisFrame() && dashCooldownTimer <= 0)
@@ -118,6 +141,10 @@ public class PlayerMovement : MonoBehaviour
     {
         rb.linearVelocityY = 0;
         rb.AddForce(new Vector2(0, jumpHeight), ForceMode2D.Impulse);
+
+        timeSinceJump = 0f;
+
+        animator.SetBool("Jumping", true);
     }
 
     void Dash(Vector2 movement)
@@ -132,6 +159,8 @@ public class PlayerMovement : MonoBehaviour
 
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2(movement.x * dashSpeed, movement.y * dashSpeed), ForceMode2D.Impulse);
+
+        animator.SetBool("Dashing", true);
     }
 
     void WallJump(int movement)
@@ -143,17 +172,21 @@ public class PlayerMovement : MonoBehaviour
 
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2(-movement * wallJumpHeight, wallJumpHeight), ForceMode2D.Impulse);
+
+        animator.SetBool("WallHugging", false);
     }
 
     void Move(Vector2 movement)
     {
         rb.linearVelocityX = movement.x * movementSpeed;
         sr.flipX = movement.x < 0;
+
+        animator.SetInteger("Movement", (int)movement.x);
     }
 
     bool GroundCheck()
     {
-        RaycastHit2D[] hits = Physics2D.RaycastAll(groundCheck.position, Vector2.down, 0.25f);
+        RaycastHit2D[] hits = Physics2D.RaycastAll(groundCheck.position, Vector2.down, 0.025f);
         return hits.Where(x => x.collider.gameObject.CompareTag("Ground")).ToList().Count != 0;
     }
 
