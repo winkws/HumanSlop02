@@ -58,6 +58,7 @@ public class PlayerMovement : MonoBehaviour
         {
             dashing = false;
             rb.gravityScale = gravity;
+            rb.linearDamping = damping;
             rb.linearVelocity = Vector2.zero;
         }
 
@@ -127,6 +128,7 @@ public class PlayerMovement : MonoBehaviour
         dashTimer = dashTime;
 
         rb.gravityScale = 0;
+        rb.linearDamping = 0;
 
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2(movement.x * dashSpeed, movement.y * dashSpeed), ForceMode2D.Impulse);
