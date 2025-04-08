@@ -1,20 +1,26 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Linq;
+using UnityEngine.UIElements;
 
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] float movementSpeed;
     [SerializeField] float jumpHeight;
 
-    [SerializeField] float dashCooldown;
     [SerializeField] float dashTime;
     [SerializeField] float dashSpeed;
 
-    [SerializeField] float wallJumpTime;
+    [SerializeField] float minWallJumpTime;
+    [SerializeField] float maxWallJumpTime;
     [SerializeField] float wallJumpHeight;
 
-    [SerializeField] float damping;
+    [SerializeField] float coyoteTime;
+
+    [SerializeField] float jumpBufferTime;
+
+    [SerializeField] float groundDamping;
+    [SerializeField] float airDamping;
 
     [SerializeField] Transform groundCheck;
     [SerializeField] Transform wallCheckLeft;
@@ -28,14 +34,16 @@ public class PlayerMovement : MonoBehaviour
     InputAction jumpAction;
     InputAction dashAction;
 
-    float dashCooldownTimer = 0f;
     float dashTimer = 0f;
     float wallJumpTimer = 0f;
+    float coyoteTimer = 0f;
+    float timeSinceJump = 0f;
+    float jumpBufferTimer = 0f;
+
+    bool dashAvailable = false;
     bool dashing = false;
     bool wallJumping = false;
     bool wallHugging = false;
-
-    float timeSinceJump = 0f;
 
     float gravity;
 
@@ -52,6 +60,7 @@ public class PlayerMovement : MonoBehaviour
         gravity = rb.gravityScale;
     }
 
+    int i = 0;
     void Update()
     {
         timeSinceJump += Time.deltaTime;
@@ -68,20 +77,17 @@ public class PlayerMovement : MonoBehaviour
         {
             dashing = false;
             rb.gravityScale = gravity;
-            rb.linearDamping = damping;
+            rb.linearDamping = airDamping;
             rb.linearVelocity = Vector2.zero;
         }
 
-        if (wallJumping && wallJumpTimer > 0 && jumpAction.IsPressed())
-        {
-            wallJumpTimer -= Time.deltaTime;
-            return;
-        }
-        else if (wallJumping && wallJumpTimer <= 0 || wallJumping && !jumpAction.IsPressed())
+        wallJumpTimer += Time.deltaTime;
+        if (wallJumping && wallJumpTimer > minWallJumpTime && !jumpAction.IsPressed() || wallJumping && wallJumpTimer > maxWallJumpTime)
         {
             rb.linearVelocityY = 0;
             wallJumping = false;
         }
+        else if (wallJumping) return;
 
         Vector2 movement = movementAction.ReadValue<Vector2>();
 
@@ -96,7 +102,7 @@ public class PlayerMovement : MonoBehaviour
             animator.SetBool("WallHugging", false);
         }
 
-        if (jumpAction.WasPressedThisFrame())
+        if (jumpAction.WasPressedThisFrame() || jumpBufferTimer > 0 && jumpAction.IsPressed() && timeSinceJump > 0.15f)
         {
             if (wallHugging)
             {
@@ -104,20 +110,31 @@ public class PlayerMovement : MonoBehaviour
                 return;
             }
 
-            if (GroundCheck())
+            if (GroundCheck() || coyoteTimer > 0)
             {
                 Jump();
             }
         }
 
+        if (jumpAction.WasPressedThisFrame())
+        {
+            jumpBufferTimer = jumpBufferTime;
+        }
+
+        jumpBufferTimer -= Time.deltaTime;
+
         if (GroundCheck() && timeSinceJump > 0.05f)
         {
-            rb.linearDamping = 10f;
+            dashAvailable = true;
+            coyoteTimer = coyoteTime;
+            rb.linearDamping = groundDamping;
             animator.SetBool("Jumping", false);
         }
         else
         {
-            rb.linearDamping = damping;
+            coyoteTimer -= Time.deltaTime;
+            animator.SetBool("Jumping", true);
+            rb.linearDamping = airDamping;
         }
         
         if (movement.x == 0)
@@ -127,12 +144,11 @@ public class PlayerMovement : MonoBehaviour
 
         if (movement == Vector2.zero) return;
 
-        if (dashAction.WasPressedThisFrame() && dashCooldownTimer <= 0)
+        if (dashAction.WasPressedThisFrame() && dashAvailable && !wallHugging)
         {
             Dash(movement);
             return;
         }
-        dashCooldownTimer -= Time.deltaTime;
 
         if (movement.x == 0) return;
 
@@ -152,8 +168,8 @@ public class PlayerMovement : MonoBehaviour
     void Dash(Vector2 movement)
     {
         dashing = true;
+        dashAvailable = false;
 
-        dashCooldownTimer = dashCooldown;
         dashTimer = dashTime;
 
         rb.gravityScale = 0;
@@ -167,12 +183,13 @@ public class PlayerMovement : MonoBehaviour
 
     void WallJump(int movement)
     {
-        wallJumpTimer = wallJumpTime;
+        wallJumpTimer = 0;
         wallJumping = true;
 
         sr.flipX = movement > 0;
 
         timeSinceJump = 0f;
+        jumpBufferTimer = 0f;
 
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2(-movement * wallJumpHeight, wallJumpHeight), ForceMode2D.Impulse);
@@ -191,8 +208,8 @@ public class PlayerMovement : MonoBehaviour
 
     bool GroundCheck()
     {
-        RaycastHit2D[] hits = Physics2D.RaycastAll(groundCheck.position, Vector2.down, 0.025f);
-        return hits.Where(x => x.collider.gameObject.CompareTag("Ground")).ToList().Count != 0;
+        Collider2D[] collider = Physics2D.OverlapBoxAll(groundCheck.position, new Vector2(0.35f, 0.1f), 0f);
+        return collider.Where(x => x.gameObject.CompareTag("Ground")).ToList().Count != 0;
     }
 
     int WallCheck()
