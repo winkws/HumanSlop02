@@ -33,6 +33,7 @@ public class PlayerMovement : MonoBehaviour
     float wallJumpTimer = 0f;
     bool dashing = false;
     bool wallJumping = false;
+    bool wallHugging = false;
 
     float timeSinceJump = 0f;
 
@@ -82,30 +83,31 @@ public class PlayerMovement : MonoBehaviour
             wallJumping = false;
         }
 
-        if (jumpAction.WasPressedThisFrame())
-        {
-            if (GroundCheck())
-            {
-                Jump();
-            }
-
-            int wallCheck = WallCheck();
-            if (!GroundCheck() && wallCheck != 0)
-            {
-                WallJump(wallCheck);
-                return;
-            }
-        }
-
         Vector2 movement = movementAction.ReadValue<Vector2>();
 
         if(WallCheck() != 0 && movement.x == WallCheck())
         {
+            wallHugging = true;
             animator.SetBool("WallHugging", true);
         }
         else
         {
+            wallHugging = false;
             animator.SetBool("WallHugging", false);
+        }
+
+        if (jumpAction.WasPressedThisFrame())
+        {
+            if (wallHugging)
+            {
+                WallJump(WallCheck());
+                return;
+            }
+
+            if (GroundCheck())
+            {
+                Jump();
+            }
         }
 
         if (GroundCheck() && timeSinceJump > 0.05f)
@@ -170,10 +172,13 @@ public class PlayerMovement : MonoBehaviour
 
         sr.flipX = movement > 0;
 
+        timeSinceJump = 0f;
+
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2(-movement * wallJumpHeight, wallJumpHeight), ForceMode2D.Impulse);
 
         animator.SetBool("WallHugging", false);
+        animator.SetBool("Jumping", true);
     }
 
     void Move(Vector2 movement)
