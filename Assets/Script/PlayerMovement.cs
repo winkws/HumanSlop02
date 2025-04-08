@@ -14,6 +14,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float wallJumpTime;
     [SerializeField] float wallJumpHeight;
 
+    [SerializeField] float damping;
+
     [SerializeField] Transform groundCheck;
     [SerializeField] Transform wallCheckLeft;
     [SerializeField] Transform wallCheckRight;
@@ -31,6 +33,8 @@ public class PlayerMovement : MonoBehaviour
     bool dashing = false;
     bool wallJumping = false;
 
+    float gravity;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -39,6 +43,8 @@ public class PlayerMovement : MonoBehaviour
         movementAction = InputSystem.actions.FindAction("movement");
         jumpAction = InputSystem.actions.FindAction("jump");
         dashAction = InputSystem.actions.FindAction("dash");
+
+        gravity = rb.gravityScale;
     }
 
     void Update()
@@ -51,16 +57,16 @@ public class PlayerMovement : MonoBehaviour
         else if (dashing && dashTimer <= 0)
         {
             dashing = false;
-            rb.gravityScale = 1f;
+            rb.gravityScale = gravity;
             rb.linearVelocity = Vector2.zero;
         }
 
-        if (wallJumping && wallJumpTimer > 0)
+        if (wallJumping && wallJumpTimer > 0 && jumpAction.IsPressed())
         {
             wallJumpTimer -= Time.deltaTime;
             return;
         }
-        else if (wallJumping && wallJumpTimer <= 0)
+        else if (wallJumping && wallJumpTimer <= 0 || wallJumping && !jumpAction.IsPressed())
         {
             rb.linearVelocityY = 0;
             wallJumping = false;
@@ -89,10 +95,10 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
-            rb.linearDamping = 0f;
+            rb.linearDamping = damping;
         }
         
-        if (movement.x == 0) rb.linearVelocityX = 0;
+        //if (movement.x == 0) rb.linearVelocityX = 0;
         if (movement == Vector2.zero) return;
 
         if (dashAction.WasPressedThisFrame() && dashCooldownTimer <= 0)
@@ -109,6 +115,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Jump()
     {
+        rb.linearVelocityY = 0;
         rb.AddForce(new Vector2(0, jumpHeight), ForceMode2D.Impulse);
     }
 
@@ -121,6 +128,7 @@ public class PlayerMovement : MonoBehaviour
 
         rb.gravityScale = 0;
 
+        rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2(movement.x * dashSpeed, movement.y * dashSpeed), ForceMode2D.Impulse);
     }
 
@@ -131,7 +139,7 @@ public class PlayerMovement : MonoBehaviour
 
         sr.flipX = movement > 0;
 
-        rb.linearVelocityY = 0;
+        rb.linearVelocity = Vector2.zero;
         rb.AddForce(new Vector2(-movement * wallJumpHeight, wallJumpHeight), ForceMode2D.Impulse);
     }
 
