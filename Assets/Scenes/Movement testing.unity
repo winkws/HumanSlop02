@@ -1725,7 +1725,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8128844576882324778, guid: b53a0a40c9539e348b4af23809ae2a63, type: 3}
       propertyPath: groundDamping
-      value: 15
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 8128844576882324778, guid: b53a0a40c9539e348b4af23809ae2a63, type: 3}
       propertyPath: movementSpeed
@@ -1753,7 +1753,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8128844576882324778, guid: b53a0a40c9539e348b4af23809ae2a63, type: 3}
       propertyPath: minWallJumpTime
-      value: 0.05
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 8128844576882324778, guid: b53a0a40c9539e348b4af23809ae2a63, type: 3}
       propertyPath: wallJumpCooldown
