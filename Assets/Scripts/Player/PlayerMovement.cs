@@ -27,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float initialWallJumpHorizontalMovement; // Initial horizontal force on wall jump
     [SerializeField] float verticalWallJumpForce; // Force applied vertically during wall jump
     [SerializeField] float horizontalWallJumpForce; // Force applied horizontally during wall jump
+    [SerializeField] float wallGravity;
 
     // Advanced movement parameters
     [Header("Advanced")]
@@ -57,6 +58,7 @@ public class PlayerMovement : MonoBehaviour
     float timeSinceJump = 0f;
 
     int wallJumps = 0; // Counter for wall jumps
+    int wallCheckResult = 0;
 
     // States to track different actions
     bool jumping;
@@ -64,10 +66,14 @@ public class PlayerMovement : MonoBehaviour
     bool dashing = false;
     bool wallJumping = false;
     bool wallHugging = false;
+    bool nextToWall = false;
     bool grounded = false;
 
     // Gravity variable to reset after dash
     float gravity;
+
+    // Non-allocating raycast array for wall check
+    private RaycastHit2D[] _wallCheckHits = new RaycastHit2D[1];
 
     void Start()
     {
@@ -147,24 +153,31 @@ public class PlayerMovement : MonoBehaviour
             rb.linearDamping = airDamping; // Apply air damping
         }
 
-        // Check for wall collisions on both sides
-        int wallCheck = WallCheck();
-        if (wallCheck != 0)
-        {
-            // Player is hugging a wall if moving towards it
-            if (movement.x == wallCheck)
-            {
-                wallHugging = true;
-            }
-            else
-            {
-                wallHugging = false;
-            }
-        }
-        else if (wallJumping) wallHugging = false;
-        else wallHugging = false;
+        wallCheckResult = WallCheck();
 
-        animator.SetBool("WallHugging", wallHugging); // Update animator for wall hugging state
+        nextToWall = wallCheckResult != 0;
+
+        // Determine if player is hugging the wall
+        bool shouldHugWall = !grounded && nextToWall && movement.x == wallCheckResult;
+
+        if (shouldHugWall)
+        {
+            if (!wallHugging)
+            {
+                rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
+            }
+            wallHugging = true;
+        }
+        else
+        {
+            wallHugging = false;
+        }
+
+        // Apply custom gravity when wall hugging
+        rb.gravityScale = wallHugging ? wallGravity : gravity;
+
+        // Update animator state
+        animator.SetBool("WallHugging", wallHugging);
     }
 
     void HandleMovement()
@@ -172,7 +185,7 @@ public class PlayerMovement : MonoBehaviour
         // If no horizontal movement, reset animation state
         if (movement.x == 0)
         {
-            animator.SetInteger("Movement", 0); 
+            animator.SetInteger("Movement", 0);
             return;
         }
 
@@ -183,14 +196,14 @@ public class PlayerMovement : MonoBehaviour
     void HandleJumpInput()
     {
         // If not grounded and not wall hugging, start buffering jump
-        if (!grounded && !wallHugging && coyoteTimer <= 0)
+        if (!grounded && !nextToWall && coyoteTimer <= 0)
         {
             StartCoroutine(BufferJump());
             return;
         }
 
         // Start wall jump if wall hugging
-        if (wallHugging)
+        if (nextToWall)
         {
             StartCoroutine(WallJump());
             return;
@@ -203,15 +216,15 @@ public class PlayerMovement : MonoBehaviour
     void HandleDashInput()
     {
         // If dash is available and player is moving, start dash
-        if (!dashAvailable || movement == Vector2.zero) return;
+        if (!dashAvailable || movement == Vector2.zero || wallHugging) return;
 
         StartCoroutine(Dash());
     }
 
     void Move(Vector2 movement)
     {
-        // Set player's horizontal velocity
-        rb.linearVelocityX = movement.x * movementSpeed;
+        // Set player's horizontal linearVelocity
+        rb.linearVelocity = new Vector2(movement.x * movementSpeed, rb.linearVelocity.y);
 
         // Flip sprite based on movement direction
         sr.flipX = movement.x < 0;
@@ -227,7 +240,7 @@ public class PlayerMovement : MonoBehaviour
 
         jumping = true;
 
-        rb.linearVelocityY = 0; // Reset vertical velocity
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0); // Reset vertical linearVelocity
         timeSinceJump = 0f;
         animator.SetBool("Jumping", true);
 
@@ -238,7 +251,7 @@ public class PlayerMovement : MonoBehaviour
         while (timeElapsed < maxJumpTime)
         {
             // Break if jump is released after minimum time
-            if (dashing || timeElapsed >= minJumpTime && !jumpAction.IsPressed()) break;
+            if (dashing || wallHugging || timeElapsed >= minJumpTime && !jumpAction.IsPressed()) break;
 
             // Apply additional jump force while holding jump button
             rb.AddForce(new Vector2(0, jumpForce), ForceMode2D.Force);
@@ -254,7 +267,7 @@ public class PlayerMovement : MonoBehaviour
     {
         wallJumping = true;
 
-        sr.flipX = movement.x > 0; // Flip sprite based on jump direction
+        sr.flipX = movement.x != 0 ? movement.x > 0 : wallCheckResult > 0; // Flip sprite based on jump direction
 
         timeSinceJump = 0f;
 
@@ -267,13 +280,20 @@ public class PlayerMovement : MonoBehaviour
             wallJumps = 0;
         }
 
-        rb.linearVelocity = Vector2.zero; // Reset velocity
+        rb.linearVelocity = Vector2.zero; // Reset linearVelocity
 
         animator.SetBool("WallHugging", false);
         animator.SetBool("Jumping", true);
 
-        Vector2 wallJumpDirection = -movement;
-   
+        Vector2 wallJumpDirection;
+
+        if (movement.x != 0) wallJumpDirection = -movement;
+        else
+        {
+            wallJumpDirection.x = -wallCheckResult;
+            wallJumpDirection.y = 1;
+        }
+
         // Apply wall jump force in opposite direction
         rb.AddForce(new Vector2(wallJumpDirection.x * initialWallJumpHorizontalMovement, initialWallJumpIniVerticalMovement), ForceMode2D.Impulse);
 
@@ -303,9 +323,9 @@ public class PlayerMovement : MonoBehaviour
 
         // Disable gravity during dash
         rb.gravityScale = 0;
-        rb.linearDamping = 0;
+        rb.linearDamping = 0; // Using linearDamping consistently
 
-        // Set the player's dash velocity
+        // Set the player's dash linearVelocity
         rb.linearVelocity = movement.normalized * dashSpeed;
 
         animator.SetInteger("Movement", (int)movement.x);
@@ -316,6 +336,7 @@ public class PlayerMovement : MonoBehaviour
         // Reset after dash finishes
         dashing = false;
         rb.gravityScale = gravity;
+        rb.linearDamping = 0;
         rb.linearVelocity = Vector2.zero;
         animator.SetBool("Dashing", false);
     }
@@ -346,17 +367,22 @@ public class PlayerMovement : MonoBehaviour
         return collider.Where(x => x.gameObject.CompareTag("Ground")).ToList().Count != 0;
     }
 
-    // Check if the player is near a wall (either left or right)
+    // Check if the player is near a wall (either left or right) - Non-allocating version
     int WallCheck()
     {
-        RaycastHit2D[] hitsLeft = Physics2D.RaycastAll(wallCheckLeft.position, Vector2.left, 0.15f);
-        RaycastHit2D[] hitsRight = Physics2D.RaycastAll(wallCheckRight.position, Vector2.right, 0.15f);
+        // Left check
+        int hitCountLeft = Physics2D.RaycastNonAlloc(wallCheckLeft.position, Vector2.left, _wallCheckHits, 0.15f, LayerMask.GetMask("Ground"));
+        if (hitCountLeft > 0 && _wallCheckHits[0].collider != null)
+        {
+            return -1; // Wall on the left
+        }
 
-        bool isWallOnLeft = hitsLeft.Where(x => x.collider.gameObject.CompareTag("Ground")).ToList().Count != 0;
-        bool isWallOnRight = hitsRight.Where(x => x.collider.gameObject.CompareTag("Ground")).ToList().Count != 0;
-
-        if (isWallOnLeft) return -1; // Wall on the left
-        if (isWallOnRight) return 1; // Wall on the right
+        // Right check
+        int hitCountRight = Physics2D.RaycastNonAlloc(wallCheckRight.position, Vector2.right, _wallCheckHits, 0.15f, LayerMask.GetMask("Ground"));
+        if (hitCountRight > 0 && _wallCheckHits[0].collider != null)
+        {
+            return 1; // Wall on the right
+        }
 
         return 0; // No wall detected
     }
