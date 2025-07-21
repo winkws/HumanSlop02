@@ -74,6 +74,7 @@ GameObject:
   - component: {fileID: 7578970120065828883}
   - component: {fileID: 4981649115389503489}
   - component: {fileID: 8650537843925532436}
+  - component: {fileID: 8128844576882324778}
   - component: {fileID: 4276162454025281677}
   m_Layer: 0
   m_Name: Player
@@ -228,6 +229,34 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.85, y: 1.75}
   m_EdgeRadius: 0
+--- !u!114 &8128844576882324778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6963523837325509614}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8849c26aff652d645a0b86972b1b7586, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movementSpeed: 12
+  jumpHeight: 25
+  dashTime: 0.2
+  dashSpeed: 15
+  wallJumpsRequiredForDashReset: 3
+  minWallJumpTime: 0.1
+  maxWallJumpTime: 0.25
+  wallJumpVerticalMovement: 15
+  wallJumpHorizontalMovement: 25
+  coyoteTime: 0.1
+  jumpBufferTime: 0.15
+  groundDamping: 30
+  airDamping: 5
+  groundCheck: {fileID: 4977752393750900160}
+  wallCheckLeft: {fileID: 8352383170611308677}
+  wallCheckRight: {fileID: 1881216960787433437}
 --- !u!95 &4276162454025281677
 Animator:
   serializedVersion: 7
