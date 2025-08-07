@@ -8,10 +8,10 @@ public class WallSlidingState : AirState
 
     public override void StateEnter()
     {
-        player.RB.linearVelocityY = 0f;
+        //player.RB.linearVelocityY = 0f;
 
-        defaultGravity = player.RB.gravityScale;
-        player.RB.gravityScale = player.PlayerData.wallSlideSpeed;
+        //defaultGravity = player.RB.gravityScale;
+        //player.RB.gravityScale = player.PlayerData.wallSlideSpeed;
 
         player.Animator.SetBool("WallHugging", true);
     }
@@ -39,7 +39,7 @@ public class WallSlidingState : AirState
 
     public override void StateExit()
     {
-        player.RB.gravityScale = defaultGravity;
+        //player.RB.gravityScale = defaultGravity;
 
         player.Animator.SetBool("WallHugging", false);
     }

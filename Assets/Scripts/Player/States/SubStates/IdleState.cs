@@ -6,7 +6,7 @@ public class IdleState : GroundedState
 
     public override void StateEnter()
     {
-        player.RB.linearVelocityX = 0f;
+        //player.RB.linearVelocityX = 0f;
         player.Animator.SetInteger("Movement", 0);
     }
 

@@ -6,13 +6,16 @@ public class Player : MonoBehaviour
 
     public PlayerData PlayerData;
 
-    public Rigidbody2D RB { get; private set; }
+    public Components Components;
+
     public SpriteRenderer SR { get; private set; }
     public Animator Animator { get; private set; }
 
     public bool IsGrounded { get; set; }
+
     public bool IsTouchingWall { get; set; }
     public float WallDirection { get; set; }
+
     public bool DashOnCooldown { get; set; }
     public bool CanDash { get; set; }
 
@@ -23,10 +26,10 @@ public class Player : MonoBehaviour
     public bool DashButtonPressed { get; set; }
 
     public Vector2 Movement { get; set; }
+    [HideInInspector] public Vector2 Velocity;
 
     private void Start()
     {
-        RB = GetComponent<Rigidbody2D>();
         SR = GetComponent<SpriteRenderer>();
         Animator = GetComponent<Animator>();
 

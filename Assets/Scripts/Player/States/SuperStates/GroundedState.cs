@@ -11,8 +11,11 @@ public class GroundedState : PlayerState
 
     public override void StateFixedUpdate()
     {
-        float playerMovement = player.Movement.x * player.PlayerData.movementSpeed;
-        player.RB.linearVelocityX = playerMovement;
+        Movement movement = player.Components.GetCoreComponent<Movement>();
+        movement.Move();
+
+        //float playerMovement = player.Movement.x * player.PlayerData.movementSpeed * Time.deltaTime;
+        //player.transform.Translate(new Vector2(playerMovement, 0));
 
         if (player.Movement.x != 0)
         {

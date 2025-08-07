@@ -13,11 +13,15 @@ MonoBehaviour:
   m_Name: playerData
   m_EditorClassIdentifier: 
   movementSpeed: 7.5
-  initialJumpHeight: 8
+  initialJumpHeight: 250
   jumpForce: 2
   minJumpTime: 0.1
   maxJumpTime: 0.3
   landingTime: 0.025
+  groundAcceleration: 75
+  airAcceleration: 30
+  groundDeceleration: 70
+  airDeceleration: 10
   dashSpeed: 12
   dashLength: 0.3
   dashCooldown: 0.5

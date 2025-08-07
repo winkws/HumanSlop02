@@ -13,6 +13,12 @@ public class PlayerData : ScriptableObject
     public float maxJumpTime;
     public float landingTime;
 
+    [Header("placeholder category name")]
+    public float groundAcceleration;
+    public float airAcceleration;
+    public float groundDeceleration;
+    public float airDeceleration;
+
     [Header("Dash")]
     public float dashSpeed;
     public float dashLength;

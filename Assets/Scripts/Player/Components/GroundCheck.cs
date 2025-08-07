@@ -15,14 +15,11 @@ public class GroundCheck : ComponentBase
 
     public override void ComponentUpdate()
     {
-        player.IsGrounded = Check();
+        //player.IsGrounded = Check();
     }
 
     private bool Check()
     {
-        //Fun optimization trick but only works if you dont add something like a upwards moving platform
-        //if (Mathf.Abs(player.RB.linearVelocityY) > 0.1f) return false;
-
         int hitCountLeft = Physics2D.RaycastNonAlloc(groundCheckLeft.position, Vector2.down, _groundCheckHits, 0.025f, LayerMask.GetMask("Ground"));
         if (hitCountLeft > 0 && _groundCheckHits[0].collider != null) { return true; }
 

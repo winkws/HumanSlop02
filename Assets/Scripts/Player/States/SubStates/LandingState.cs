@@ -10,7 +10,7 @@ public class LandingState : GroundedState
     {
         player.Animator.SetBool("Jumping", false);
         player.Animator.SetInteger("Movement", 0);
-        player.RB.linearVelocityX = 0f;
+        //player.RB.linearVelocityX = 0f;
         player.CanDash = true;
         timer = 0f;
     }

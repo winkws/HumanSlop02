@@ -11,13 +11,13 @@ public class DashingState : AbilityState
     {
         timer = 0f;
 
-        defaultGravity = player.RB.gravityScale;
+        //defaultGravity = player.RB.gravityScale;
         player.DashInput = false;
         player.CanDash = false;
 
-        player.RB.linearVelocity = Vector2.zero;
-        player.RB.gravityScale = 0f;
-        player.RB.AddForce(player.Movement.normalized * player.PlayerData.dashSpeed, ForceMode2D.Impulse);
+        //player.RB.linearVelocity = Vector2.zero;
+        //player.RB.gravityScale = 0f;
+        //player.RB.AddForce(player.Movement.normalized * player.PlayerData.dashSpeed, ForceMode2D.Impulse);
 
         player.Animator.SetBool("Dashing", true);
     }
@@ -47,8 +47,8 @@ public class DashingState : AbilityState
 
     public override void StateExit()
     {
-        player.RB.gravityScale = defaultGravity;
-        player.RB.linearVelocity = Vector2.zero;
+        //player.RB.gravityScale = defaultGravity;
+        //player.RB.linearVelocity = Vector2.zero;
 
         player.GetComponent<Timers>().DashCoroutine();
 

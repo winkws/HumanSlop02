@@ -9,10 +9,13 @@ public class AirState : PlayerState
 
     public override void StateFixedUpdate()
     {
-        float playerMovement = player.Movement.x * player.PlayerData.movementSpeed * player.PlayerData.airMovementPenalty;
-        player.RB.linearVelocityX = playerMovement;
+        Movement movement = player.Components.GetCoreComponent<Movement>();
+        movement.Move();
 
-        if(player.Movement.x != 0)
+        //float playerMovement = player.Movement.x * player.PlayerData.movementSpeed * player.PlayerData.airMovementPenalty * Time.deltaTime;
+        //player.transform.Translate(new Vector2(playerMovement, 0));
+
+        if (player.Movement.x != 0)
         {
             player.SR.flipX = player.Movement.x < 0;
         }
